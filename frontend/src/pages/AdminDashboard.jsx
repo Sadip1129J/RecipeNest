@@ -1,0 +1,297 @@
+// AdminDashboard.jsx — Refactored to pure Tailwind CSS
+import { useState, useEffect } from 'react';
+import { 
+  Users, 
+  BookOpen, 
+  Plus, 
+  Search, 
+  Edit3, 
+  Trash2, 
+  BarChart3, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  Filter,
+  MoreVertical,
+  Tags
+} from 'lucide-react';
+import { recipeService } from '../services/recipeService';
+import { userService } from '../services/userService';
+import { categoryService } from '../services/categoryService';
+import { statsService } from '../services/statsService';
+import Sidebar from '../components/Sidebar';
+import RecipeForm from '../components/RecipeForm';
+import Modal from '../components/Modal';
+import Loading from '../components/Loading';
+
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('recipes'); // recipes, users, categories, stats
+  const [recipes, setRecipes] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Search & Filter
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Form/Modal state
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [deletingRecipeId, setDeletingRecipeId] = useState(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [r, u, c, s] = await Promise.all([
+        recipeService.getAll(),
+        userService.getAll(),
+        categoryService.getAll(),
+        statsService.getSummary()
+      ]);
+      setRecipes(r);
+      setUsers(u);
+      setCategories(c);
+      setStats(s);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!deletingRecipeId) return;
+    try {
+      await recipeService.delete(deletingRecipeId);
+      setRecipes(recipes.filter(r => r.id !== deletingRecipeId));
+      fetchData(); // Refresh stats
+    } catch (err) { console.error(err); }
+  };
+
+  const handleFormSubmit = async (data) => {
+    try {
+      if (editingRecipe) {
+        await recipeService.update(editingRecipe.id, data);
+      } else {
+        await recipeService.create(data);
+      }
+      setIsFormOpen(false);
+      setEditingRecipe(null);
+      fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  if (loading && recipes.length === 0) return <Loading />;
+
+  return (
+    <div className="admin-layout">
+      <Sidebar role="Admin" />
+      
+      <main className="admin-main">
+        {/* Top Header */}
+        <header className="admin-topbar">
+          <h1 className="text-xl font-bold font-serif">Administrator Control Panel</h1>
+          <div className="ml-auto flex items-center gap-4">
+            <div className="relative group hidden sm:block">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+              <input 
+                type="text" placeholder="Search resources..."
+                className="pl-10 pr-4 py-2 bg-secondary rounded-xl text-sm border-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button className="p-2.5 bg-secondary text-muted rounded-xl hover:bg-primary/5 hover:text-primary transition-colors">
+              <Plus size={20} />
+            </button>
+          </div>
+        </header>
+
+        <div className="admin-content">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {[
+              { label: 'Total Recipes', value: stats?.totalRecipes || 0, icon: BookOpen, color: 'text-orange-600', bg: 'bg-orange-50', trend: '+12%' },
+              { label: 'Active Chefs', value: stats?.totalChefs || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+5%' },
+              { label: 'Platform Users', value: stats?.totalUsers || 0, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50', trend: '+18%' },
+              { label: 'Avg Rating', value: stats?.averageRating?.toFixed(1) || '4.8', icon: BarChart3, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: 'Stable' },
+            ].map((s, i) => (
+              <div key={i} className="admin-stat-card group">
+                <div className={`p-4 ${s.bg} ${s.color} rounded-2xl group-hover:scale-110 transition-transform`}>
+                  <s.icon size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-subtle uppercase tracking-widest">{s.label}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-foreground">{s.value}</span>
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+                      <ArrowUpRight size={10} /> {s.trend}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-2 mb-8 bg-secondary/50 p-1 rounded-2xl w-fit">
+            {[
+              { id: 'recipes', label: 'Recipes', icon: BookOpen },
+              { id: 'users', label: 'Users', icon: Users },
+              { id: 'categories', label: 'Categories', icon: Tags },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  activeTab === tab.id ? 'bg-white text-primary shadow-sm' : 'text-muted hover:text-foreground'
+                }`}
+              >
+                <tab.icon size={16} /> {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Main Resource View */}
+          <div className="bg-white border border-border rounded-[2.5rem] shadow-sm overflow-hidden">
+            {/* Toolbar */}
+            <div className="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-lg font-bold font-serif capitalize">{activeTab} Management</h2>
+                <span className="px-3 py-1 bg-secondary text-muted rounded-full text-xs font-bold">
+                  {activeTab === 'recipes' ? recipes.length : activeTab === 'users' ? users.length : categories.length} total
+                </span>
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button className="flex-1 sm:flex-none btn btn-outline btn-sm gap-2">
+                  <Filter size={14} /> Filter
+                </button>
+                {activeTab === 'recipes' && (
+                  <button 
+                    onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }}
+                    className="flex-1 sm:flex-none btn btn-primary btn-sm gap-2"
+                  >
+                    <Plus size={14} /> Add New
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Table / Form Content */}
+            <div className="p-6">
+              {isFormOpen ? (
+                <RecipeForm 
+                  initialData={editingRecipe}
+                  onSubmit={handleFormSubmit}
+                  onCancel={() => { setIsFormOpen(false); setEditingRecipe(null); }}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left border-b border-border">
+                        <th className="pb-4 text-xs font-bold text-subtle uppercase tracking-wider px-4">Resource</th>
+                        <th className="pb-4 text-xs font-bold text-subtle uppercase tracking-wider px-4">Meta</th>
+                        <th className="pb-4 text-xs font-bold text-subtle uppercase tracking-wider px-4">Status</th>
+                        <th className="pb-4 text-xs font-bold text-subtle uppercase tracking-wider px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {activeTab === 'recipes' && recipes.map(r => (
+                        <tr key={r.id} className="group hover:bg-secondary/30 transition-colors">
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-secondary overflow-hidden">
+                                <img src={r.imageUrl} alt="" className="w-full h-full object-cover" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm text-foreground">{r.title}</p>
+                                <p className="text-xs text-muted">by Chef {r.chefName}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <p className="text-xs font-bold text-foreground">{r.categoryName}</p>
+                            <p className="text-[10px] text-subtle uppercase tracking-wider mt-0.5">{r.prepTime} • {r.servings} Servings</p>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                              Published
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => { setEditingRecipe(r); setIsFormOpen(true); }}
+                                className="p-2 text-muted hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+                                title="Edit Recipe"
+                              >
+                                <Edit3 size={18} />
+                              </button>
+                              <button 
+                                onClick={() => setDeletingRecipeId(r.id)}
+                                className="p-2 text-muted hover:text-destructive hover:bg-red-50 rounded-lg transition-all"
+                                title="Delete Recipe"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      
+                      {activeTab === 'users' && users.map(u => (
+                        <tr key={u.id} className="hover:bg-secondary/30 transition-colors">
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                                {u.fullName.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm text-foreground">{u.fullName}</p>
+                                <p className="text-xs text-muted">{u.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <p className="text-xs font-bold text-foreground">Joined {new Date().toLocaleDateString()}</p>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              u.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 
+                              u.role === 'Chef' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <button className="p-2 text-muted hover:text-foreground hover:bg-secondary rounded-lg transition-all">
+                              <MoreVertical size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Confirmation Modal */}
+      <Modal 
+        isOpen={!!deletingRecipeId}
+        onClose={() => setDeletingRecipeId(null)}
+        onConfirm={handleDeleteRecipe}
+        title="Delete Recipe"
+        message="Are you sure you want to delete this recipe? This action cannot be undone and will remove all associated reviews."
+        confirmText="Delete Forever"
+      />
+    </div>
+  );
+}

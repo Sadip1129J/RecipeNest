@@ -1,0 +1,23 @@
+# .gitignore for Full-Stack RecipeNest
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.env
+
+# .NET / Backend
+bin/
+obj/
+appsettings.Development.json
+
+# IDEs / OS
+.vscode/
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.DS_Store
+Thumbs.db
