@@ -1,4 +1,4 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecipeNest.Api.DTOs.Reviews
 {
@@ -15,7 +15,9 @@ namespace RecipeNest.Api.DTOs.Reviews
 
     public class CreateReviewDto
     {
+        [Required, Range(1, 5)]
         public int Rating { get; set; } // 1-5
+        [Required]
         public string Comment { get; set; }
     }
 }

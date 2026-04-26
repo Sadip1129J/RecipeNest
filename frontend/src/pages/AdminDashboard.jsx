@@ -17,10 +17,10 @@ import {
 import { recipeService } from '../services/recipeService';
 import { userService } from '../services/userService';
 import { categoryService } from '../services/categoryService';
-import { statsService } from '../services/statsService';
+import { statisticsService } from '../services/statisticsService';
 import Sidebar from '../components/Sidebar';
 import RecipeForm from '../components/RecipeForm';
-import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Loading from '../components/Loading';
 
 export default function AdminDashboard() {
@@ -37,7 +37,8 @@ export default function AdminDashboard() {
   // Form/Modal state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
-  const [deletingRecipeId, setDeletingRecipeId] = useState(null);
+  const [deleteData, setDeleteData] = useState(null); // { id, type: 'recipe'|'user'|'category' }
+  const [alert, setAlert] = useState(null); // { type: 'success'|'error', message: '' }
 
   useEffect(() => {
     fetchData();
@@ -48,9 +49,9 @@ export default function AdminDashboard() {
     try {
       const [r, u, c, s] = await Promise.all([
         recipeService.getAll(),
-        userService.getAll(),
+        userService.getAllUsers(),
         categoryService.getAll(),
-        statsService.getSummary()
+        statisticsService.getAdminStats()
       ]);
       setRecipes(r);
       setUsers(u);
@@ -63,13 +64,30 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteRecipe = async () => {
-    if (!deletingRecipeId) return;
+  const handleDelete = async () => {
+    if (!deleteData) return;
     try {
-      await recipeService.delete(deletingRecipeId);
-      setRecipes(recipes.filter(r => r.id !== deletingRecipeId));
+      if (deleteData.type === 'recipe') {
+        await recipeService.delete(deleteData.id);
+        setRecipes(recipes.filter(r => r.id !== deleteData.id));
+        setAlert({ type: 'success', message: 'Recipe successfully deleted.' });
+      } else if (deleteData.type === 'user') {
+        await userService.deleteUser(deleteData.id);
+        setUsers(users.filter(u => u.id !== deleteData.id));
+        setAlert({ type: 'success', message: 'User successfully deleted.' });
+      } else if (deleteData.type === 'category') {
+        await categoryService.delete(deleteData.id);
+        setCategories(categories.filter(c => c.id !== deleteData.id));
+        setAlert({ type: 'success', message: 'Category successfully deleted.' });
+      }
       fetchData(); // Refresh stats
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: 'error', message: `Failed to delete ${deleteData.type}.` });
+    } finally {
+      setDeleteData(null);
+      setTimeout(() => setAlert(null), 5000);
+    }
   };
 
   const handleFormSubmit = async (data) => {
@@ -166,6 +184,11 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
+                {alert && (
+                  <div className={`px-4 py-2 rounded-xl text-sm font-bold ${alert.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                    {alert.message}
+                  </div>
+                )}
                 <button className="flex-1 sm:flex-none btn btn-outline btn-sm gap-2">
                   <Filter size={14} /> Filter
                 </button>
@@ -232,7 +255,7 @@ export default function AdminDashboard() {
                                 <Edit3 size={18} />
                               </button>
                               <button 
-                                onClick={() => setDeletingRecipeId(r.id)}
+                                onClick={() => setDeleteData({ id: r.id, type: 'recipe' })}
                                 className="p-2 text-muted hover:text-destructive hover:bg-red-50 rounded-lg transition-all"
                                 title="Delete Recipe"
                               >
@@ -268,8 +291,28 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <button className="p-2 text-muted hover:text-foreground hover:bg-secondary rounded-lg transition-all">
-                              <MoreVertical size={18} />
+                            <button 
+                              onClick={() => setDeleteData({ id: u.id, type: 'user' })}
+                              className="p-2 text-muted hover:text-destructive hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete User"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {activeTab === 'categories' && categories.map(c => (
+                        <tr key={c.id} className="hover:bg-secondary/30 transition-colors">
+                          <td className="py-4 px-4 font-bold text-foreground">{c.name}</td>
+                          <td className="py-4 px-4 text-xs text-muted">{c.id}</td>
+                          <td className="py-4 px-4 text-xs">Active</td>
+                          <td className="py-4 px-4 text-right">
+                            <button 
+                              onClick={() => setDeleteData({ id: c.id, type: 'category' })}
+                              className="p-2 text-muted hover:text-destructive hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete Category"
+                            >
+                              <Trash2 size={18} />
                             </button>
                           </td>
                         </tr>
@@ -284,12 +327,16 @@ export default function AdminDashboard() {
       </main>
 
       {/* Confirmation Modal */}
-      <Modal 
-        isOpen={!!deletingRecipeId}
-        onClose={() => setDeletingRecipeId(null)}
-        onConfirm={handleDeleteRecipe}
-        title="Delete Recipe"
-        message="Are you sure you want to delete this recipe? This action cannot be undone and will remove all associated reviews."
+      <ConfirmModal 
+        isOpen={!!deleteData}
+        onClose={() => setDeleteData(null)}
+        onConfirm={handleDelete}
+        title={`Delete ${deleteData?.type}`}
+        message={
+          deleteData?.type === 'recipe' ? "Are you sure you want to delete this recipe? This action cannot be undone and will remove all associated reviews." :
+          deleteData?.type === 'user' ? "Are you sure you want to delete this user? This action cannot be undone." :
+          "Are you sure you want to delete this category?"
+        }
         confirmText="Delete Forever"
       />
     </div>

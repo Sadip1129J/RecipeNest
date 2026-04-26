@@ -7,6 +7,7 @@ import { reviewService } from '../services/reviewService';
 import { bookmarkService } from '../services/bookmarkService';
 import { useAuth } from '../context/AuthContext';
 import Loading from '../components/Loading';
+import ReviewForm from '../components/ReviewForm';
 
 export default function RecipeDetails() {
   const { id } = useParams();
@@ -15,12 +16,6 @@ export default function RecipeDetails() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
-
-  // Review form state
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [submitMsg, setSubmitMsg] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -51,22 +46,9 @@ export default function RecipeDetails() {
     } catch (err) { console.error(err); }
   };
 
-  const handleReview = async (e) => {
-    e.preventDefault();
-    if (rating === 0) { setSubmitMsg('Please select a star rating.'); return; }
-    setSubmitting(true);
-    try {
-      const rv = await reviewService.create(id, { rating, comment });
-      setReviews([rv, ...reviews]);
-      setRating(0);
-      setComment('');
-      setSubmitMsg('Review submitted successfully!');
-      recipeService.getById(id).then(setRecipe);
-    } catch (err) {
-      setSubmitMsg('Error submitting review.');
-    } finally {
-      setSubmitting(false);
-    }
+  const handleReviewAdded = (newReview) => {
+    setReviews([newReview, ...reviews]);
+    recipeService.getById(id).then(setRecipe);
   };
 
   if (loading) return <Loading />;
@@ -197,48 +179,11 @@ export default function RecipeDetails() {
 
               {/* Review Input */}
               {isLoggedIn ? (
-                <div className="bg-white p-8 rounded-[2rem] border border-border shadow-sm space-y-6">
-                  <h3 className="text-xl font-bold">Write a Review</h3>
-                  <form onSubmit={handleReview} className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map(n => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setRating(n)}
-                          className="transition-transform active:scale-90"
-                        >
-                          <Star 
-                            size={28} 
-                            className={`${n <= rating ? 'fill-amber-400 text-amber-400' : 'text-border'} transition-colors`} 
-                          />
-                        </button>
-                      ))}
-                    </div>
-                    <textarea 
-                      className="w-full p-4 bg-secondary rounded-2xl border-none text-foreground placeholder:text-subtle focus:ring-2 focus:ring-primary/20 min-h-[120px]"
-                      placeholder="Share your experience cooking this recipe..."
-                      value={comment}
-                      onChange={e => setComment(e.target.value)}
-                    />
-                    {submitMsg && (
-                      <p className={`text-sm font-medium ${submitMsg.includes('Error') ? 'text-destructive' : 'text-emerald-600'}`}>
-                        {submitMsg}
-                      </p>
-                    )}
-                    <button 
-                      type="submit" 
-                      disabled={submitting}
-                      className="btn btn-primary px-10 py-3"
-                    >
-                      {submitting ? 'Submitting...' : 'Post Review'}
-                    </button>
-                  </form>
-                </div>
+                <ReviewForm recipeId={id} onReviewAdded={handleReviewAdded} />
               ) : (
                 <div className="bg-primary/5 p-8 rounded-3xl text-center space-y-3">
                   <p className="text-muted font-medium">Want to share your experience?</p>
-                  <Link to="/login" className="btn btn-primary px-8">Sign in to review</Link>
+                  <Link to="/login" className="btn btn-primary px-8">Please login to write a review.</Link>
                 </div>
               )}
 

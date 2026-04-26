@@ -7,6 +7,8 @@ import { categoryService } from '../services/categoryService';
 import { bookmarkService } from '../services/bookmarkService';
 import RecipeCard from '../components/RecipeCard';
 import Loading from '../components/Loading';
+import SearchBar from '../components/SearchBar';
+import CategoryFilter from '../components/CategoryFilter';
 
 export default function Recipes() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -89,41 +91,15 @@ export default function Recipes() {
             {/* Search Box */}
             <div className="space-y-3">
               <label className="text-xs font-bold text-subtle uppercase tracking-widest px-2">Quick Search</label>
-              <div className="relative group">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-subtle group-focus-within:text-primary transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Title, ingredient..." 
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                  value={search}
-                  onChange={handleSearch}
-                />
-              </div>
+              <SearchBar value={search} onChange={handleSearch} placeholder="Title, ingredient..." />
             </div>
 
             {/* Category Filter */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between px-2">
-                <label className="text-xs font-bold text-subtle uppercase tracking-widest">Categories</label>
-                <SlidersHorizontal size={14} className="text-subtle" />
-              </div>
-              <div className="flex flex-wrap lg:flex-col gap-2">
-                {['All', ...categories.map(c => c.name)].map(cat => (
-                  <button 
-                    key={cat} 
-                    onClick={() => handleCategoryClick(cat)}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
-                      activeCategory === cat 
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                      : 'bg-white border border-border text-muted hover:bg-secondary hover:text-foreground'
-                    }`}
-                  >
-                    {cat}
-                    {activeCategory === cat && <X size={14} />}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <CategoryFilter 
+              categories={categories} 
+              activeCategory={activeCategory} 
+              onCategoryClick={handleCategoryClick} 
+            />
 
             {/* Clear All */}
             {(search || activeCategory !== 'All') && (

@@ -11,19 +11,23 @@ import {
   Star,
   UtensilsCrossed,
   Filter,
-  Eye
+  Eye,
+  Heart,
+  Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
 import RecipeForm from '../components/RecipeForm';
-import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Loading from '../components/Loading';
+import { statisticsService } from '../services/statisticsService';
 
 export default function ChefDashboard() {
   const { user } = useAuth();
   const [recipes, setRecipes] = useState([]);
+  const [chefStats, setChefStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -31,6 +35,7 @@ export default function ChefDashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [deletingRecipeId, setDeletingRecipeId] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     fetchMyRecipes();
@@ -39,8 +44,12 @@ export default function ChefDashboard() {
   const fetchMyRecipes = async () => {
     setLoading(true);
     try {
-      const data = await recipeService.getMine();
+      const [data, statsData] = await Promise.all([
+        recipeService.getMine(),
+        statsService.getChefStats()
+      ]);
       setRecipes(data);
+      setChefStats(statsData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -53,7 +62,14 @@ export default function ChefDashboard() {
     try {
       await recipeService.delete(deletingRecipeId);
       setRecipes(recipes.filter(r => r.id !== deletingRecipeId));
-    } catch (err) { console.error(err); }
+      setAlert({ type: 'success', message: 'Recipe successfully deleted.' });
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: 'error', message: 'Failed to delete recipe.' });
+    } finally {
+      setDeletingRecipeId(null);
+      setTimeout(() => setAlert(null), 5000);
+    }
   };
 
   const handleFormSubmit = async (data) => {
@@ -70,9 +86,9 @@ export default function ChefDashboard() {
   };
 
   const stats = [
-    { label: 'My Recipes', value: recipes.length, icon: BookOpen, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: 'Total Views', value: '1,240', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Avg Rating', value: recipes.length > 0 ? (recipes.reduce((acc, r) => acc + (r.ratingAverage || 0), 0) / recipes.length).toFixed(1) : '4.8', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'My Recipes', value: chefStats?.totalRecipes || 0, icon: BookOpen, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Total Likes', value: chefStats?.totalLikes || 0, icon: Heart, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Avg Rating', value: chefStats?.avgRating?.toFixed(1) || '0.0', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
     { label: 'Reviews', value: recipes.reduce((acc, r) => acc + (r.ratingCount || 0), 0), icon: UtensilsCrossed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
 
@@ -132,6 +148,11 @@ export default function ChefDashboard() {
                 <p className="text-sm text-muted">Manage your shared recipes and track their performance.</p>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
+                {alert && (
+                  <div className={`px-4 py-3 rounded-xl text-sm font-bold ${alert.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                    {alert.message}
+                  </div>
+                )}
                 <button 
                   onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }}
                   className="flex-1 sm:flex-none btn btn-primary py-3.5 px-8 gap-2 shadow-xl shadow-primary/20"
@@ -224,12 +245,12 @@ export default function ChefDashboard() {
         </div>
       </main>
 
-      <Modal 
+      <ConfirmModal 
         isOpen={!!deletingRecipeId}
         onClose={() => setDeletingRecipeId(null)}
         onConfirm={handleDeleteRecipe}
         title="Remove Recipe"
-        message="Are you sure you want to remove this recipe from your portfolio? This will permanently delete the recipe and all its reviews."
+        message="Are you sure you want to delete this recipe? This action cannot be undone."
         confirmText="Confirm Delete"
       />
     </div>

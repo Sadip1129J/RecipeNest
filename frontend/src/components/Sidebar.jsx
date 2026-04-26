@@ -32,8 +32,7 @@ export default function Sidebar({ role }) {
     ],
     Chef: [
       { label: 'My Portfolio', to: '/chef-dashboard', icon: LayoutDashboard },
-      { label: 'Add New Recipe', to: '/chef-dashboard', icon: PlusCircle },
-      { label: 'My Reviews', to: '/chef-dashboard', icon: BarChart3 },
+      { label: 'Saved Recipes', to: '/user-dashboard', icon: Heart },
       { label: 'Profile Settings', to: '/profile-settings', icon: Settings },
     ],
     User: [

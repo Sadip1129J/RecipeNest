@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecipeNest.Api.DTOs.Recipes
 {
@@ -26,11 +26,16 @@ namespace RecipeNest.Api.DTOs.Recipes
 
     public class CreateRecipeDto
     {
+        [Required]
         public string Title { get; set; }
+        [Required]
         public string Description { get; set; }
+        [Required]
         public string CategoryId { get; set; }
         public string ImageUrl { get; set; } = "";
+        [Required, MinLength(1)]
         public List<string> Ingredients { get; set; }
+        [Required, MinLength(1)]
         public List<string> Instructions { get; set; }
         public string PrepTime { get; set; }
         public int Servings { get; set; } = 2;

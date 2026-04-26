@@ -12,6 +12,7 @@ export default function ChefProfile() {
   const [chef, setChef] = useState(null);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recipeSearch, setRecipeSearch] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -29,9 +30,14 @@ export default function ChefProfile() {
 
   const stats = [
     { label: 'Recipes', value: recipes.length, icon: ChefHat },
-    { label: 'Avg Rating', value: recipes.length > 0 ? (recipes.reduce((acc, r) => acc + (r.ratingAverage || 0), 0) / recipes.length).toFixed(1) : '4.8', icon: Star },
-    { label: 'Experience', value: '12+ Years', icon: Award },
+    { label: 'Avg Rating', value: recipes.length > 0 ? (recipes.reduce((acc, r) => acc + (r.ratingAverage || 0), 0) / recipes.length).toFixed(1) : '0.0', icon: Star },
+    { label: 'Experience', value: 'Pro', icon: Award },
   ];
+
+  const filteredRecipes = recipes.filter(r => 
+    r.title.toLowerCase().includes(recipeSearch.toLowerCase()) || 
+    r.categoryName?.toLowerCase().includes(recipeSearch.toLowerCase())
+  );
 
   return (
     <div className="bg-background min-h-screen">
@@ -84,8 +90,14 @@ export default function ChefProfile() {
                       {chef.location}
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-muted font-medium bg-secondary px-4 py-1.5 rounded-full text-sm">
-                    <Mail size={16} className="text-primary" />
+                  {chef.contactEmail && (
+                    <div className="flex items-center gap-2 text-muted font-medium bg-secondary px-4 py-1.5 rounded-full text-sm">
+                      <Mail size={16} className="text-primary" />
+                      {chef.contactEmail}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-emerald-700 font-medium bg-emerald-50 border border-emerald-200 px-4 py-1.5 rounded-full text-sm">
+                    <Award size={16} />
                     Verified Chef
                   </div>
                 </div>
@@ -105,17 +117,32 @@ export default function ChefProfile() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-center lg:justify-start gap-4 pt-4 border-t border-border/50">
-                <p className="text-xs text-subtle font-bold uppercase tracking-widest mr-2">Connect:</p>
-                {[Camera, MessageCircle, Globe].map((Icon, i) => (
-                  <a key={i} href="#" className="w-10 h-10 rounded-full bg-secondary text-muted flex items-center justify-center hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1">
-                    <Icon size={18} />
-                  </a>
-                ))}
-                <button className="btn btn-primary px-8 py-3 ml-auto hidden lg:flex shadow-lg shadow-primary/20">
-                  Follow Chef
-                </button>
-              </div>
+              {(chef.socialLinks && Object.keys(chef.socialLinks).length > 0) || chef.contactEmail ? (
+                <div className="flex items-center justify-center lg:justify-start gap-4 pt-4 border-t border-border/50">
+                  <p className="text-xs text-subtle font-bold uppercase tracking-widest mr-2">Connect:</p>
+                  
+                  {chef.contactEmail && (
+                    <a href={`mailto:${chef.contactEmail}`} className="w-10 h-10 rounded-full bg-secondary text-muted flex items-center justify-center hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1" title="Email">
+                      <Mail size={18} />
+                    </a>
+                  )}
+
+                  {chef.socialLinks && Object.entries(chef.socialLinks).map(([platform, url]) => {
+                    let Icon = Globe;
+                    if (platform.toLowerCase() === 'instagram') Icon = Camera;
+                    if (platform.toLowerCase() === 'twitter') Icon = MessageCircle;
+                    return (
+                      <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-secondary text-muted flex items-center justify-center hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1" title={platform}>
+                        <Icon size={18} />
+                      </a>
+                    );
+                  })}
+                  
+                  <button className="btn btn-primary px-8 py-3 ml-auto hidden lg:flex shadow-lg shadow-primary/20">
+                    Follow Chef
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -123,16 +150,22 @@ export default function ChefProfile() {
 
       {/* ─── Recipe Portfolio ─── */}
       <div className="container py-20">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
           <div className="space-y-2 text-center md:text-left">
             <span className="flex items-center justify-center md:justify-start gap-2 text-primary font-bold text-sm uppercase tracking-widest">
               <ChefHat size={16} /> Recipe Portfolio
             </span>
             <h2 className="text-3xl lg:text-4xl font-serif font-bold">Creations by {chef.displayName}</h2>
           </div>
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-sm font-medium text-muted">{recipes.length} Recipes Published</span>
-            <div className="h-px w-20 bg-border hidden sm:block" />
+          
+          <div className="flex items-center justify-center gap-4 w-full md:w-auto">
+            <input 
+              type="text" 
+              placeholder="Search recipes..." 
+              value={recipeSearch}
+              onChange={e => setRecipeSearch(e.target.value)}
+              className="w-full md:w-64 px-4 py-2 bg-white border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+            />
           </div>
         </div>
 
@@ -141,9 +174,13 @@ export default function ChefProfile() {
             <ChefHat size={48} className="mx-auto text-border mb-4" />
             <p className="text-xl text-subtle font-serif italic">No recipes published yet. Check back soon!</p>
           </div>
+        ) : filteredRecipes.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-[3rem] border border-border">
+            <p className="text-xl text-subtle font-serif italic">No recipes match your search.</p>
+          </div>
         ) : (
           <div className="recipe-grid">
-            {recipes.map(r => (
+            {filteredRecipes.map(r => (
               <RecipeCard key={r.id} recipe={r} />
             ))}
           </div>
