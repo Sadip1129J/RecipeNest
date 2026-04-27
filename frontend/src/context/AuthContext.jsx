@@ -48,13 +48,18 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Update user state after profile edits (merge partial data)
+  const updateUser = (updatedFields) => {
+    setUser(prev => prev ? { ...prev, ...updatedFields } : prev);
+  };
+
   // Helper booleans for role checks
   const isAdmin = user?.role === 'Admin';
   const isChef = user?.role === 'Chef' || user?.role === 'Admin';
   const isLoggedIn = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, loading, isLoggedIn, isAdmin, isChef, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isLoggedIn, isAdmin, isChef, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

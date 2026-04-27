@@ -19,6 +19,7 @@ import { recipeService } from '../services/recipeService';
 import { userService } from '../services/userService';
 import { categoryService } from '../services/categoryService';
 import { statisticsService } from '../services/statisticsService';
+import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
 import RecipeForm from '../components/RecipeForm';
 import ConfirmModal from '../components/ConfirmModal';
@@ -26,6 +27,7 @@ import Loading from '../components/Loading';
 
 export default function AdminDashboard() {
   const location = useLocation();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('recipes'); // recipes, users, categories, stats, moderation
   const [recipes, setRecipes] = useState([]);
   const [users, setUsers] = useState([]);
@@ -323,9 +325,13 @@ export default function AdminDashboard() {
                         <tr key={u.id} className="hover:bg-secondary/30 transition-colors">
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                                {u.fullName.charAt(0)}
-                              </div>
+                              {u.profileImageUrl ? (
+                                <img src={u.profileImageUrl} alt={u.fullName} className="w-10 h-10 rounded-full object-cover border border-primary/20" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                                  {u.fullName.charAt(0)}
+                                </div>
+                              )}
                               <div>
                                 <p className="font-bold text-sm text-foreground">{u.fullName}</p>
                                 <p className="text-xs text-muted">{u.email}</p>

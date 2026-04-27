@@ -1,7 +1,8 @@
 // RecipeForm.jsx — Reusable form for adding/editing recipes
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Image, Clock, Users, Tags, Utensils } from 'lucide-react';
+import { X, Plus, Trash2, Image, Clock, Users, Tags, Utensils, Upload } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
+import { uploadService } from '../services/uploadService';
 
 export default function RecipeForm({ initialData = null, onSubmit, onCancel, loading = false }) {
   const [categories, setCategories] = useState([]);
@@ -18,6 +19,8 @@ export default function RecipeForm({ initialData = null, onSubmit, onCancel, loa
   });
 
   const [tagInput, setTagInput] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(initialData?.imageUrl || '');
 
   useEffect(() => {
     categoryService.getAll().then(setCategories).catch(console.error);
@@ -64,6 +67,22 @@ export default function RecipeForm({ initialData = null, onSubmit, onCancel, loa
 
   const removeTag = (tag) => {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImagePreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const { imageUrl } = await uploadService.uploadImage(file);
+      setFormData(prev => ({ ...prev, imageUrl }));
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setImagePreview('');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -123,11 +142,24 @@ export default function RecipeForm({ initialData = null, onSubmit, onCancel, loa
               </select>
             </div>
             <div>
-              <label className="label flex items-center gap-2"><Image size={14} /> Image URL</label>
-              <input 
-                name="imageUrl" value={formData.imageUrl} onChange={handleChange}
-                className="input" placeholder="https://unsplash.com/..."
-              />
+              <label className="label flex items-center gap-2"><Upload size={14} /> Recipe Photo</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label
+                  className="input"
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: uploading ? 'var(--color-subtle)' : 'var(--color-muted)' }}
+                >
+                  <Upload size={16} />
+                  {uploading ? 'Uploading...' : formData.imageUrl ? 'Change Photo' : 'Choose Photo'}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={uploading} />
+                </label>
+                {(imagePreview || formData.imageUrl) && (
+                  <img
+                    src={imagePreview || formData.imageUrl}
+                    alt="Preview"
+                    style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                  />
+                )}
+              </div>
             </div>
           </div>
 

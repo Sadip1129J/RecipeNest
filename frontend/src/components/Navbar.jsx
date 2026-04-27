@@ -78,7 +78,10 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           {isLoggedIn ? (
             <>
-              <div className="flex items-center gap-3 px-3 py-1.5 bg-secondary rounded-full mr-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full mr-2">
+                {user?.profileImageUrl && (
+                  <img src={user.profileImageUrl} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                )}
                 <span className="text-xs font-semibold text-foreground">{user.fullName}</span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${roleStyles[user.role] || roleStyles.User}`}>
                   {user.role}

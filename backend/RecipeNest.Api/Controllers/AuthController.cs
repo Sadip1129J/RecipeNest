@@ -12,10 +12,12 @@ namespace RecipeNest.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly UserService _userService;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, UserService userService)
         {
             _authService = authService;
+            _userService = userService;
         }
 
         // POST /api/auth/register — create a new user account
@@ -52,14 +54,23 @@ namespace RecipeNest.Api.Controllers
         // GET /api/auth/me — get the currently logged-in user info from token
         [HttpGet("me")]
         [Authorize]
-        public IActionResult Me()
+        public async Task<IActionResult> Me()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var email = User.FindFirstValue(ClaimTypes.Email);
             var role = User.FindFirstValue(ClaimTypes.Role);
             var name = User.FindFirstValue(ClaimTypes.Name);
 
-            return Ok(new { id, email, role, fullName = name });
+            var profile = await _userService.GetProfileAsync(id);
+
+            return Ok(new 
+            { 
+                id, 
+                email, 
+                role, 
+                fullName = name, 
+                profileImageUrl = profile?.ProfileImageUrl 
+            });
         }
     }
 }

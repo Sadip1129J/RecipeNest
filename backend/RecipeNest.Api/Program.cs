@@ -66,6 +66,9 @@ var app = builder.Build();
 // ── Middleware Pipeline ──
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+// Serve uploaded images from wwwroot/uploads
+app.UseStaticFiles();
+
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();

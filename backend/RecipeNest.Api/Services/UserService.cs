@@ -32,6 +32,17 @@ namespace RecipeNest.Api.Services
                 .Set(u => u.ProfileImageUrl, dto.ProfileImageUrl);
 
             var result = await _db.Users.UpdateOneAsync(u => u.Id == userId, update);
+
+            // Also synchronize ChefProfile if it exists
+            var chefUpdate = Builders<ChefProfile>.Update
+                .Set(c => c.DisplayName, dto.FullName)
+                .Set(c => c.ProfileImageUrl, dto.ProfileImageUrl);
+            await _db.ChefProfiles.UpdateOneAsync(c => c.UserId == userId, chefUpdate);
+
+            // Also update denormalized ChefName in Recipes collection
+            var recipeUpdate = Builders<Recipe>.Update.Set(r => r.ChefName, dto.FullName);
+            await _db.Recipes.UpdateManyAsync(r => r.ChefId == userId, recipeUpdate);
+
             return result.ModifiedCount > 0;
         }
 

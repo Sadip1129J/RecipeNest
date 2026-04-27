@@ -68,9 +68,17 @@ export default function Sidebar({ role, className = '' }) {
       {/* Profile Summary */}
       <div className="px-6 py-4 mb-6">
         <div className="flex items-center gap-4 p-4 bg-secondary rounded-2xl">
-          <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-lg">
-            {user?.fullName?.charAt(0)}
-          </div>
+          {user?.profileImageUrl ? (
+            <img 
+              src={user.profileImageUrl} 
+              alt={user.fullName} 
+              className="w-12 h-12 rounded-full object-cover border border-primary/20" 
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-lg">
+              {user?.fullName?.charAt(0)}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-foreground truncate">{user?.fullName}</p>
             <p className="text-[10px] font-bold text-subtle uppercase tracking-wider">{role} Account</p>
