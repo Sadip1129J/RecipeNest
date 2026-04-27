@@ -31,6 +31,7 @@ namespace RecipeNest.Api.Models
         public double RatingAverage { get; set; } = 0;
         public int RatingCount { get; set; } = 0;
         public int LikesCount { get; set; } = 0;
+        public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

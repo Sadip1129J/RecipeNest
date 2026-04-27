@@ -26,6 +26,16 @@ namespace RecipeNest.Api.Controllers
             return Ok(reviews);
         }
 
+        // GET /api/reviews/me — get current user's reviews
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyReviews()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var reviews = await _reviewService.GetMineAsync(userId);
+            return Ok(reviews);
+        }
+
         // POST /api/reviews/recipe/{recipeId} — submit a review (authenticated users)
         [HttpPost("recipe/{recipeId}")]
         [Authorize]

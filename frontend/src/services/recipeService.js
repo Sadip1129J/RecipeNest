@@ -9,6 +9,12 @@ export const recipeService = {
   getMine: () => api.get('/recipes/me').then(r => r.data),
 
   getByChef: (chefId) => api.get(`/recipes/chef/${chefId}`).then(r => r.data),
+  
+  getAllAdmin: () => api.get('/recipes/admin/all').then(r => r.data),
+  
+  updateStatus: (id, status) => api.patch(`/recipes/${id}/status`, status, {
+    headers: { 'Content-Type': 'application/json' }
+  }).then(r => r.data),
 
   create: (data) => api.post('/recipes', data).then(r => r.data),
 

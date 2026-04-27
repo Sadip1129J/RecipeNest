@@ -93,24 +93,22 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full overflow-hidden">
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative min-h-[85vh] flex items-center pt-20 pb-24 overflow-hidden bg-white">
+      <section className="hero">
         {/* Background Image & Gradients */}
-        <div className="absolute inset-0 z-0">
+        <div className="hero-bg">
           <img
             src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600"
             alt="Fine cooking background"
-            className="w-full h-full object-cover object-center opacity-40 sm:opacity-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/10 sm:via-white/80" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+          <div className="hero-overlay" />
         </div>
 
         {/* Floating Decorative Elements */}
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl" />
 
-        <div className="container relative z-10">
-          <div className="max-w-3xl">
+        <div className="container hero-content">
+          <div className="max-w-3xl mx-auto flex flex-col items-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold mb-8 animate-bounce-subtle">
               <Sparkles size={16} />
               <span>Nepal's #1 Recipe Platform</span>
@@ -121,13 +119,13 @@ export default function Home() {
               <span className="block text-primary italic">Fine Cooking</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-muted mb-10 max-w-xl leading-relaxed">
+            <p className="text-lg sm:text-xl text-muted mb-10 max-w-xl mx-auto leading-relaxed">
               Connect with world-class chefs, explore curated recipes, and bring
               gourmet flavours to your kitchen.
             </p>
 
             {/* Search Bar */}
-            <form onSubmit={handleHeroSearch} className="relative max-w-xl mb-12">
+            <form onSubmit={handleHeroSearch} className="relative w-full max-w-xl mx-auto mb-12">
               <div className="group relative flex items-center bg-white rounded-2xl shadow-xl shadow-primary/5 border border-border p-2 focus-within:ring-4 focus-within:ring-primary/10 transition-all duration-300">
                 <Search size={22} className="absolute left-6 text-subtle" />
                 <input
@@ -143,7 +141,7 @@ export default function Home() {
               </div>
             </form>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-4">
               <Link to="/recipes" className="btn btn-primary px-8 py-4 shadow-lg shadow-primary/20">
                 <BookOpen size={20} /> Explore Recipes
               </Link>
@@ -153,7 +151,7 @@ export default function Home() {
             </div>
 
             {/* Stats */}
-            <div className="flex flex-wrap gap-8 sm:gap-16 mt-16 pt-12 border-t border-border">
+            <div className="flex flex-wrap justify-center gap-8 sm:gap-16 mt-16 pt-12 border-t border-border">
               <StatItem value={1200} suffix="+" label="Recipes" />
               <StatItem value={350} suffix="+" label="Expert Chefs" />
               <StatItem value={50} suffix="k+" label="Happy Cooks" />

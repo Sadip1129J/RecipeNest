@@ -11,34 +11,42 @@ import {
   UtensilsCrossed,
   Tags,
   BarChart3,
-  Heart
+  Heart,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export default function Sidebar({ role }) {
+export default function Sidebar({ role, className = '' }) {
   const location = useLocation();
   const { logout, user } = useAuth();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    const [pathname, hash] = path.split('#');
+    if (hash) {
+      return location.pathname === pathname && location.hash === `#${hash}`;
+    }
+    return location.pathname === pathname && !location.hash;
+  };
 
   // Configuration based on role
   const menuConfigs = {
     Admin: [
       { label: 'Overview', to: '/admin-dashboard', icon: LayoutDashboard },
-      { label: 'Manage Recipes', to: '/admin-dashboard', icon: BookOpen },
-      { label: 'Manage Users', to: '/admin-dashboard', icon: Users },
-      { label: 'Categories', to: '/admin-dashboard', icon: Tags },
-      { label: 'Analytics', to: '/admin-dashboard', icon: BarChart3 },
+      { label: 'Manage Recipes', to: '/admin-dashboard#recipes', icon: BookOpen },
+      { label: 'Manage Users', to: '/admin-dashboard#users', icon: Users },
+      { label: 'Categories', to: '/admin-dashboard#categories', icon: Tags },
+      { label: 'Analytics', to: '/admin-dashboard#stats', icon: BarChart3 },
     ],
     Chef: [
       { label: 'My Portfolio', to: '/chef-dashboard', icon: LayoutDashboard },
-      { label: 'Saved Recipes', to: '/user-dashboard', icon: Heart },
+      { label: 'My Recipes', to: '/chef-dashboard#recipes', icon: UtensilsCrossed },
+      { label: 'Saved Recipes', to: '/user-dashboard#saved-recipes', icon: Heart },
       { label: 'Profile Settings', to: '/profile-settings', icon: Settings },
     ],
     User: [
       { label: 'My Dashboard', to: '/user-dashboard', icon: LayoutDashboard },
-      { label: 'Saved Recipes', to: '/user-dashboard', icon: Heart },
-      { label: 'My Reviews', to: '/user-dashboard', icon: UtensilsCrossed },
+      { label: 'Saved Recipes', to: '/user-dashboard#saved-recipes', icon: Heart },
+      { label: 'My Reviews', to: '/user-dashboard#my-reviews', icon: UtensilsCrossed },
       { label: 'Profile Settings', to: '/profile-settings', icon: Settings },
     ]
   };
@@ -46,7 +54,7 @@ export default function Sidebar({ role }) {
   const menuItems = menuConfigs[role] || menuConfigs.User;
 
   return (
-    <aside className="w-72 bg-white border-r border-border flex flex-col h-screen fixed top-0 left-0 z-40 overflow-y-auto shadow-sm">
+    <aside className={`admin-sidebar ${className}`}>
       {/* Brand */}
       <div className="p-8 border-b border-border mb-4">
         <Link to="/" className="flex items-center gap-2 group">
@@ -95,8 +103,15 @@ export default function Sidebar({ role }) {
         })}
       </nav>
 
-      {/* Footer / Logout */}
-      <div className="p-6 border-t border-border mt-auto">
+      {/* Footer / Home / Logout */}
+      <div className="p-6 border-t border-border mt-auto space-y-2">
+        <Link 
+          to="/"
+          className="flex items-center gap-3 w-full p-4 text-sm font-semibold text-muted hover:bg-secondary hover:text-foreground rounded-2xl transition-colors"
+        >
+          <Home size={20} />
+          <span>Back to Main Page</span>
+        </Link>
         <button 
           onClick={logout}
           className="flex items-center gap-3 w-full p-4 text-sm font-semibold text-destructive hover:bg-red-50 rounded-2xl transition-colors"

@@ -1,5 +1,6 @@
 // AdminDashboard.jsx — Refactored to pure Tailwind CSS
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Users, 
   BookOpen, 
@@ -24,12 +25,15 @@ import ConfirmModal from '../components/ConfirmModal';
 import Loading from '../components/Loading';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('recipes'); // recipes, users, categories, stats
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('recipes'); // recipes, users, categories, stats, moderation
   const [recipes, setRecipes] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [allRecipes, setAllRecipes] = useState([]); // Includes pending
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // Search & Filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,21 +48,36 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const hash = location.hash.substring(1);
+    if (['recipes', 'users', 'categories', 'stats'].includes(hash)) {
+      setActiveTab(hash);
+      // Optional: scroll to the main content area
+      const element = document.getElementById('admin-resource-view');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    } else if (!hash) {
+      setActiveTab('recipes');
+    }
+  }, [location.hash]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [r, u, c, s] = await Promise.all([
+      // Fetch core resources individually to prevent one failure from blocking everything
+      const results = await Promise.allSettled([
         recipeService.getAll(),
         userService.getAllUsers(),
         categoryService.getAll(),
         statisticsService.getAdminStats()
       ]);
-      setRecipes(r);
-      setUsers(u);
-      setCategories(c);
-      setStats(s);
+
+      if (results[0].status === 'fulfilled') setRecipes(results[0].value);
+      if (results[1].status === 'fulfilled') setUsers(results[1].value);
+      if (results[2].status === 'fulfilled') setCategories(results[2].value);
+      if (results[3].status === 'fulfilled') setStats(results[3].value);
+
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
     }
@@ -103,15 +122,22 @@ export default function AdminDashboard() {
     } catch (err) { console.error(err); }
   };
 
+
   if (loading && recipes.length === 0) return <Loading />;
 
   return (
     <div className="admin-layout">
-      <Sidebar role="Admin" />
+      <Sidebar role={user?.role} className={!isSidebarOpen ? 'collapsed' : 'open'} />
       
-      <main className="admin-main">
+      <main className={`admin-main ${!isSidebarOpen ? 'full-width' : ''}`}>
         {/* Top Header */}
         <header className="admin-topbar">
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 text-muted hover:bg-secondary rounded-xl transition-colors"
+          >
+            <MoreVertical size={20} className={!isSidebarOpen ? '' : 'rotate-90'} />
+          </button>
           <h1 className="text-xl font-bold font-serif">Administrator Control Panel</h1>
           <div className="ml-auto flex items-center gap-4">
             <div className="relative group hidden sm:block">
@@ -160,6 +186,7 @@ export default function AdminDashboard() {
               { id: 'recipes', label: 'Recipes', icon: BookOpen },
               { id: 'users', label: 'Users', icon: Users },
               { id: 'categories', label: 'Categories', icon: Tags },
+              { id: 'stats', label: 'Analytics', icon: BarChart3 },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -174,13 +201,14 @@ export default function AdminDashboard() {
           </div>
 
           {/* Main Resource View */}
-          <div className="bg-white border border-border rounded-[2.5rem] shadow-sm overflow-hidden">
+          <div id="admin-resource-view" className="bg-white border border-border rounded-[2.5rem] shadow-sm overflow-hidden">
             {/* Toolbar */}
             <div className="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-4">
                 <h2 className="text-lg font-bold font-serif capitalize">{activeTab} Management</h2>
                 <span className="px-3 py-1 bg-secondary text-muted rounded-full text-xs font-bold">
-                  {activeTab === 'recipes' ? recipes.length : activeTab === 'users' ? users.length : categories.length} total
+                  {activeTab === 'recipes' ? recipes.length : 
+                   activeTab === 'users' ? users.length : categories.length} total
                 </span>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -211,6 +239,36 @@ export default function AdminDashboard() {
                   onSubmit={handleFormSubmit}
                   onCancel={() => { setIsFormOpen(false); setEditingRecipe(null); }}
                 />
+              ) : activeTab === 'stats' ? (
+                <div className="space-y-10">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="p-8 bg-secondary/30 rounded-[2rem] border border-border">
+                      <h4 className="text-lg font-serif font-bold mb-6">User Growth</h4>
+                      <div className="h-48 flex items-end gap-2 px-4">
+                        {[40, 70, 45, 90, 65, 80, 95].map((h, i) => (
+                          <div key={i} className="flex-1 bg-primary/20 rounded-t-lg transition-all hover:bg-primary" style={{ height: `${h}%` }} />
+                        ))}
+                      </div>
+                      <div className="flex justify-between mt-4 text-[10px] font-bold text-subtle px-2">
+                        <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+                      </div>
+                    </div>
+                    <div className="p-8 bg-secondary/30 rounded-[2rem] border border-border">
+                      <h4 className="text-lg font-serif font-bold mb-6">Recipe Popularity</h4>
+                      <div className="space-y-4">
+                        {recipes.slice(0, 4).map(r => (
+                          <div key={r.id} className="flex items-center justify-between">
+                            <span className="text-sm font-medium truncate max-w-[200px]">{r.title}</span>
+                            <div className="flex-1 mx-4 h-1.5 bg-border rounded-full overflow-hidden">
+                              <div className="h-full bg-primary" style={{ width: `${(r.ratingAverage / 5) * 100}%` }} />
+                            </div>
+                            <span className="text-xs font-bold">{r.ratingAverage.toFixed(1)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -239,11 +297,6 @@ export default function AdminDashboard() {
                           <td className="py-4 px-4">
                             <p className="text-xs font-bold text-foreground">{r.categoryName}</p>
                             <p className="text-[10px] text-subtle uppercase tracking-wider mt-0.5">{r.prepTime} • {r.servings} Servings</p>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                              Published
-                            </span>
                           </td>
                           <td className="py-4 px-4 text-right">
                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

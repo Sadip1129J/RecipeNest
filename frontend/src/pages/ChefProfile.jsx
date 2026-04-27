@@ -15,14 +15,22 @@ export default function ChefProfile() {
   const [recipeSearch, setRecipeSearch] = useState('');
 
   useEffect(() => {
-    Promise.all([
-      chefService.getById(id),
-      recipeService.getByChef(id),
-    ]).then(([c, r]) => {
-      setChef(c);
-      setRecipes(r);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const c = await chefService.getById(id);
+        setChef(c);
+        if (c && c.userId) {
+          const r = await recipeService.getByChef(c.userId);
+          setRecipes(r);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [id]);
 
   if (loading) return <Loading />;
@@ -81,7 +89,7 @@ export default function ChefProfile() {
             <div className="flex-1 space-y-8 text-center lg:text-left">
               <div className="space-y-4">
                 <h1 className="text-4xl lg:text-6xl font-serif font-bold text-foreground">
-                  Chef {chef.displayName}
+                  {chef.displayName.toLowerCase().startsWith('chef') ? '' : 'Chef '}{chef.displayName}
                 </h1>
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
                   {chef.location && (
@@ -179,7 +187,7 @@ export default function ChefProfile() {
             <p className="text-xl text-subtle font-serif italic">No recipes match your search.</p>
           </div>
         ) : (
-          <div className="recipe-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredRecipes.map(r => (
               <RecipeCard key={r.id} recipe={r} />
             ))}

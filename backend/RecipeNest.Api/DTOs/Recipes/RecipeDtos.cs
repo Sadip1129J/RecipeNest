@@ -21,6 +21,7 @@ namespace RecipeNest.Api.DTOs.Recipes
         public double RatingAverage { get; set; }
         public int RatingCount { get; set; }
         public int LikesCount { get; set; }
+        public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

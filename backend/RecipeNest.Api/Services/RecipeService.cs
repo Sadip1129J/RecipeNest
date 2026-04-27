@@ -24,7 +24,7 @@ namespace RecipeNest.Api.Services
         public async Task<List<RecipeDto>> GetAllAsync(string? query = null, string? category = null)
         {
             var filter = Builders<Recipe>.Filter.Empty;
-
+            
             // Filter by category name (case-insensitive)
             if (!string.IsNullOrWhiteSpace(category) && category != "All")
             {
@@ -48,16 +48,25 @@ namespace RecipeNest.Api.Services
             return recipes.Select(ToDto).ToList();
         }
 
+        // Get all recipes for Admin moderation (no status filter)
+        public async Task<List<RecipeDto>> GetAllAdminAsync()
+        {
+            var recipes = await _db.Recipes.Find(_ => true).SortByDescending(r => r.CreatedAt).ToListAsync();
+            return recipes.Select(ToDto).ToList();
+        }
+
         public async Task<RecipeDto> GetByIdAsync(string id)
         {
             var recipe = await _db.Recipes.Find(r => r.Id == id).FirstOrDefaultAsync();
             return recipe == null ? null : ToDto(recipe);
         }
 
-        // Get all recipes by a specific chef
+        // Get recipes by a specific chef
+        // If requester is NOT the chef or admin, only show approved
         public async Task<List<RecipeDto>> GetByChefAsync(string chefId)
         {
-            var recipes = await _db.Recipes.Find(r => r.ChefId == chefId)
+            var filter = Builders<Recipe>.Filter.Eq(r => r.ChefId, chefId);
+            var recipes = await _db.Recipes.Find(filter)
                 .SortByDescending(r => r.CreatedAt).ToListAsync();
             return recipes.Select(ToDto).ToList();
         }
@@ -80,7 +89,8 @@ namespace RecipeNest.Api.Services
                 Instructions = dto.Instructions,
                 PrepTime = dto.PrepTime,
                 Servings = dto.Servings,
-                Tags = dto.Tags
+                Tags = dto.Tags,
+                Status = "Approved"
             };
 
             await _db.Recipes.InsertOneAsync(recipe);
@@ -128,6 +138,23 @@ namespace RecipeNest.Api.Services
             return result.DeletedCount > 0;
         }
 
+        public async Task<bool> UpdateStatusAsync(string id, string status)
+        {
+            if (status == "Rejected")
+            {
+                // Hard Moderation: Rejecting a recipe deletes it
+                var result = await _db.Recipes.DeleteOneAsync(r => r.Id == id);
+                return result.DeletedCount > 0;
+            }
+
+            var update = Builders<Recipe>.Update
+                .Set(r => r.Status, status)
+                .Set(r => r.UpdatedAt, DateTime.UtcNow);
+
+            var resultUpdate = await _db.Recipes.UpdateOneAsync(r => r.Id == id, update);
+            return resultUpdate.ModifiedCount > 0;
+        }
+
         private RecipeDto ToDto(Recipe r) => new RecipeDto
         {
             Id = r.Id,
@@ -146,6 +173,7 @@ namespace RecipeNest.Api.Services
             RatingAverage = r.RatingAverage,
             RatingCount = r.RatingCount,
             LikesCount = r.LikesCount,
+            Status = r.Status ?? "Approved",
             CreatedAt = r.CreatedAt
         };
     }

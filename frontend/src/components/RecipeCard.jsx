@@ -1,6 +1,6 @@
 // RecipeCard.jsx — Refactored to pure Tailwind CSS
 import { Link } from 'react-router-dom';
-import { Clock, Star, Bookmark } from 'lucide-react';
+import { Clock, Star, Bookmark, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { bookmarkService } from '../services/bookmarkService';
 import { useState, useEffect } from 'react';
@@ -32,6 +32,25 @@ export default function RecipeCard({ recipe, savedIds = [], onBookmarkChange }) 
       console.error(err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleShare = async (e) => {
+    e.preventDefault();
+    const shareUrl = `${window.location.origin}/recipes/${recipe.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.title,
+          text: `Check out this delicious recipe: ${recipe.title}`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard!');
     }
   };
 
@@ -79,16 +98,26 @@ export default function RecipeCard({ recipe, savedIds = [], onBookmarkChange }) 
             <span className="text-xs font-medium text-muted">by {recipe.chefName}</span>
           </div>
           
-          <button
-            onClick={handleBookmark}
-            disabled={saving}
-            className="p-1.5 rounded-full hover:bg-secondary transition-colors"
-          >
-            <Bookmark 
-              size={18} 
-              className={`transition-all ${isSaved ? 'fill-primary text-primary scale-110' : 'text-subtle'}`}
-            />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleShare}
+              className="p-1.5 rounded-full hover:bg-secondary text-subtle hover:text-primary transition-colors"
+              title="Share Recipe"
+            >
+              <Share2 size={18} />
+            </button>
+            <button
+              onClick={handleBookmark}
+              disabled={saving}
+              className="p-1.5 rounded-full hover:bg-secondary transition-colors"
+              title={isSaved ? "Remove Bookmark" : "Save Recipe"}
+            >
+              <Bookmark 
+                size={18} 
+                className={`transition-all ${isSaved ? 'fill-primary text-primary scale-110' : 'text-subtle'}`}
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>

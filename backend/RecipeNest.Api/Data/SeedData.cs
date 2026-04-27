@@ -105,7 +105,8 @@ namespace RecipeNest.Api.Data
                             ImageUrl = "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
                             Ingredients = new List<string> { "Rice", "Mushroom", "Truffle Oil" },
                             Instructions = new List<string> { "Cook rice.", "Add oil." },
-                            PrepTime = "45 min", Servings = 4, RatingAverage = 4.8
+                            PrepTime = "45 min", Servings = 4, RatingAverage = 4.8,
+                            Status = "Approved"
                         },
                         new Recipe
                         {
@@ -116,7 +117,8 @@ namespace RecipeNest.Api.Data
                             ImageUrl = "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800",
                             Ingredients = new List<string> { "Chicken", "Flour" },
                             Instructions = new List<string> { "Steam." },
-                            PrepTime = "45 min", Servings = 4, RatingAverage = 4.9
+                            PrepTime = "45 min", Servings = 4, RatingAverage = 4.9,
+                            Status = "Approved"
                         }
                     };
                     await db.Recipes.InsertManyAsync(recipes);

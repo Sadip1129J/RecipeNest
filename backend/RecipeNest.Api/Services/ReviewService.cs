@@ -23,7 +23,7 @@ namespace RecipeNest.Api.Services
         {
             var reviews = await _db.Reviews.Find(r => r.RecipeId == recipeId)
                 .SortByDescending(r => r.CreatedAt).ToListAsync();
-            return reviews.Select(ToDto).ToList();
+            return reviews.Select(r => ToDto(r)).ToList();
         }
 
         public async Task<ReviewDto> CreateAsync(string recipeId, string userId, string userName, CreateReviewDto dto)
@@ -45,7 +45,10 @@ namespace RecipeNest.Api.Services
             // Recalculate recipe average rating
             await RecalculateRatingAsync(recipeId);
 
-            return ToDto(review);
+            // Fetch recipe title for the response
+            var recipe = await _db.Recipes.Find(r => r.Id == recipeId).FirstOrDefaultAsync();
+
+            return ToDto(review, recipe?.Title);
         }
 
         // Recalculate the average rating for a recipe after a new review
@@ -65,10 +68,30 @@ namespace RecipeNest.Api.Services
             );
         }
 
-        private ReviewDto ToDto(Review r) => new ReviewDto
+        public async Task<List<ReviewDto>> GetMineAsync(string userId)
+        {
+            var reviews = await _db.Reviews.Find(r => r.UserId == userId)
+                .SortByDescending(r => r.CreatedAt).ToListAsync();
+
+            if (!reviews.Any()) return new List<ReviewDto>();
+
+            // Fetch recipe titles for the reviews
+            var recipeIds = reviews.Select(r => r.RecipeId).Distinct().ToList();
+            var filter = Builders<Recipe>.Filter.In(r => r.Id, recipeIds);
+            var recipes = await _db.Recipes.Find(filter).ToListAsync();
+            var recipeMap = recipes.ToDictionary(r => r.Id, r => r.Title);
+
+            return reviews.Select(r => {
+                recipeMap.TryGetValue(r.RecipeId, out var title);
+                return ToDto(r, title);
+            }).ToList();
+        }
+
+        private ReviewDto ToDto(Review r, string? recipeTitle = null) => new ReviewDto
         {
             Id = r.Id,
             RecipeId = r.RecipeId,
+            RecipeTitle = recipeTitle ?? "",
             UserId = r.UserId,
             UserName = r.UserName,
             Rating = r.Rating,

@@ -1,5 +1,6 @@
 // ChefDashboard.jsx — Refactored to pure Tailwind CSS
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   BookOpen, 
   Plus, 
@@ -26,6 +27,7 @@ import { statisticsService } from '../services/statisticsService';
 
 export default function ChefDashboard() {
   const { user } = useAuth();
+  const location = useLocation();
   const [recipes, setRecipes] = useState([]);
   const [chefStats, setChefStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,17 +43,27 @@ export default function ChefDashboard() {
     fetchMyRecipes();
   }, []);
 
+  useEffect(() => {
+    const hash = location.hash.substring(1);
+    if (hash === 'recipes') {
+      const element = document.getElementById('chef-recipes');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [location.hash, loading]);
+
   const fetchMyRecipes = async () => {
     setLoading(true);
     try {
-      const [data, statsData] = await Promise.all([
+      const results = await Promise.allSettled([
         recipeService.getMine(),
-        statsService.getChefStats()
+        statisticsService.getChefStats()
       ]);
-      setRecipes(data);
-      setChefStats(statsData);
+
+      if (results[0].status === 'fulfilled') setRecipes(results[0].value);
+      if (results[1].status === 'fulfilled') setChefStats(results[1].value);
+
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching chef data:', err);
     } finally {
       setLoading(false);
     }
@@ -96,7 +108,7 @@ export default function ChefDashboard() {
 
   return (
     <div className="admin-layout">
-      <Sidebar role="Chef" />
+      <Sidebar role={user?.role} />
       
       <main className="admin-main">
         {/* Top Header */}
@@ -140,7 +152,7 @@ export default function ChefDashboard() {
           </div>
 
           {/* Main Resource View */}
-          <div className="bg-white border border-border rounded-[2.5rem] shadow-sm overflow-hidden">
+          <div id="chef-recipes" className="bg-white border border-border rounded-[2.5rem] shadow-sm overflow-hidden">
             {/* Toolbar */}
             <div className="p-8 border-b border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-secondary/30">
               <div className="space-y-1">
@@ -213,9 +225,12 @@ export default function ChefDashboard() {
                             {r.ratingAverage?.toFixed(1) || '4.5'}
                           </div>
                         </div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-subtle uppercase tracking-widest">Added: {new Date(r.createdAt).toLocaleDateString()}</span>
+                        </div>
                         <div className="flex items-center gap-4 text-[10px] font-bold text-subtle uppercase tracking-widest">
                           <span className="flex items-center gap-1"><Clock size={12} /> {r.prepTime}</span>
-                          <span className="flex items-center gap-1">Published: {new Date(r.createdAt).toLocaleDateString()}</span>
+                          <span className="flex items-center gap-1"><Star size={12} /> {r.ratingAverage?.toFixed(1) || '0.0'}</span>
                         </div>
                         <div className="flex gap-2 pt-2">
                           <button 

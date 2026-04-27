@@ -23,7 +23,7 @@ The project follows a decoupled **Client-Server** architecture:
     *   **Why**: Significantly faster than older tools like Create React App, providing near-instant startup and rebuild times.
 
 ### Styling & UI
-*   **Vanilla CSS3**
+*   **Tailwind CSS**
     *   **Where**: `global.css`, `admin.css`.
     *   **How**: CSS Variables (tokens) for colors, spacing, and typography. Modern layout techniques like Flexbox and Grid.
     *   **Why**: Chosen to provide maximum design flexibility and "pixel-perfect" control over the premium landing page aesthetics without the constraints of a utility-first framework.

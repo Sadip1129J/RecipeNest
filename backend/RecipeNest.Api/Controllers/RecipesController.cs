@@ -32,6 +32,16 @@ namespace RecipeNest.Api.Controllers
         {
             var recipe = await _recipeService.GetByIdAsync(id);
             if (recipe == null) return NotFound();
+
+            // If not approved, only Chef owner or Admin can see it
+            if (recipe.Status != "Approved")
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var role = User.FindFirstValue(ClaimTypes.Role);
+                if (recipe.ChefId != userId && role != "Admin")
+                    return NotFound(); // Hide the existence of non-approved items
+            }
+
             return Ok(recipe);
         }
 
@@ -45,13 +55,14 @@ namespace RecipeNest.Api.Controllers
             return Ok(recipes);
         }
 
-        // GET /api/recipes/chef/{chefId} — get a specific chef's recipes (public)
+        // GET /api/recipes/chef/{chefId} — get a specific chef's recipes
         [HttpGet("chef/{chefId}")]
         public async Task<IActionResult> GetByChef(string chefId)
         {
             var recipes = await _recipeService.GetByChefAsync(chefId);
             return Ok(recipes);
         }
+
 
         // POST /api/recipes — create a recipe (Chef or Admin only)
         [HttpPost]

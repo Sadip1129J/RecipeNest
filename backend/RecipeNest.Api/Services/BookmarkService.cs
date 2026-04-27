@@ -1,6 +1,7 @@
 using RecipeNest.Api.Data;
 using RecipeNest.Api.DTOs.Recipes;
 using MongoDB.Driver;
+using RecipeNest.Api.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,7 +51,8 @@ namespace RecipeNest.Api.Services
             if (user == null || user.SavedRecipeIds == null) return new List<RecipeDto>();
 
             var savedIds = user.SavedRecipeIds;
-            var recipes = await _db.Recipes.Find(r => savedIds.Contains(r.Id)).ToListAsync();
+            var filter = Builders<Recipe>.Filter.In(r => r.Id, savedIds);
+            var recipes = await _db.Recipes.Find(filter).ToListAsync();
 
             return recipes.Select(r => new RecipeDto
             {

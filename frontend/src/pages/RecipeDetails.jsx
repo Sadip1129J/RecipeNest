@@ -46,6 +46,24 @@ export default function RecipeDetails() {
     } catch (err) { console.error(err); }
   };
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.title,
+          text: `Check out this delicious recipe: ${recipe.title}`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard!');
+    }
+  };
+
   const handleReviewAdded = (newReview) => {
     setReviews([newReview, ...reviews]);
     recipeService.getById(id).then(setRecipe);
@@ -99,7 +117,11 @@ export default function RecipeDetails() {
                 <Bookmark size={18} className={isSaved ? 'fill-white' : ''} />
                 {isSaved ? 'Saved' : 'Save Recipe'}
               </button>
-              <button className="p-3 bg-secondary text-muted rounded-full hover:text-foreground transition-colors" title="Share">
+              <button 
+                onClick={handleShare}
+                className="p-3 bg-secondary text-muted rounded-full hover:text-foreground transition-colors" 
+                title="Share Recipe"
+              >
                 <Share2 size={18} />
               </button>
               <button className="p-3 bg-secondary text-muted rounded-full hover:text-foreground transition-colors" title="Print">

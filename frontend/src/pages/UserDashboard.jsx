@@ -1,5 +1,6 @@
 // UserDashboard.jsx — Refactored to pure Tailwind CSS
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Heart, 
   Clock, 
@@ -23,9 +24,20 @@ export default function UserDashboard() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const location = useLocation();
+
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location, loading]);
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -54,7 +66,7 @@ export default function UserDashboard() {
 
   return (
     <div className="admin-layout">
-      <Sidebar role="User" />
+      <Sidebar role={user?.role} />
       
       <main className="admin-main">
         {/* Header */}
@@ -93,7 +105,7 @@ export default function UserDashboard() {
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
             {/* Saved Recipes Section */}
-            <div className="space-y-6">
+            <div className="space-y-6" id="saved-recipes">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-serif font-bold flex items-center gap-2">
                   <Heart size={20} className="text-primary fill-primary" /> Saved Recipes
@@ -140,7 +152,7 @@ export default function UserDashboard() {
             </div>
 
             {/* My Reviews Section */}
-            <div className="space-y-6">
+            <div className="space-y-6" id="my-reviews">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-serif font-bold flex items-center gap-2">
                   <UtensilsCrossed size={20} className="text-primary" /> My Reviews

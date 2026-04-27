@@ -19,11 +19,11 @@ import ProfileSettings from './pages/ProfileSettings';
 
 function AppLayout() {
   const location = useLocation();
-  const hideNavbar = location.pathname === '/admin-dashboard';
+  const isDashboard = ['/admin-dashboard', '/chef-dashboard', '/user-dashboard'].includes(location.pathname);
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      {!isDashboard && <Navbar />}
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
@@ -34,9 +34,9 @@ function AppLayout() {
         <Route path="/chefs" element={<Chefs />} />
         <Route path="/chefs/:id" element={<ChefProfile />} />
 
-        {/* Protected: User */}
+        {/* Protected: User & Chef & Admin (for saved recipes) */}
         <Route path="/user-dashboard" element={
-          <ProtectedRoute roles={['User']}>
+          <ProtectedRoute roles={['User', 'Chef', 'Admin']}>
             <UserDashboard />
           </ProtectedRoute>
         } />
@@ -62,7 +62,7 @@ function AppLayout() {
           </ProtectedRoute>
         } />
       </Routes>
-      {!hideNavbar && <Footer />}
+      {!isDashboard && <Footer />}
     </>
   );
 }
