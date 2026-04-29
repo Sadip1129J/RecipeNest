@@ -54,7 +54,18 @@ namespace RecipeNest.Api.Services
 
         public async Task<bool> DeleteUserAsync(string userId)
         {
+            // 1. Delete associated ChefProfile
+            await _db.ChefProfiles.DeleteOneAsync(c => c.UserId == userId);
+            
+            // 2. Delete associated Recipes (and their reviews if needed, but here we just delete recipes)
+            await _db.Recipes.DeleteManyAsync(r => r.ChefId == userId);
+            
+            // 3. Delete associated Reviews made BY this user
+            await _db.Reviews.DeleteManyAsync(r => r.UserId == userId);
+
+            // 4. Delete the User itself
             var result = await _db.Users.DeleteOneAsync(u => u.Id == userId);
+            
             return result.DeletedCount > 0;
         }
 

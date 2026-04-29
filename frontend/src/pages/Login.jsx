@@ -12,11 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const demoCreds = [
-    { email: 'admin@recipenest.com', password: 'Admin123!', label: 'Admin', cls: 'badge-admin' },
-    { email: 'chef@recipenest.com', password: 'Chef123!', label: 'Chef', cls: 'badge-chef' },
-    { email: 'user@recipenest.com', password: 'User123!', label: 'User', cls: 'badge-user' },
-  ];
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,29 +69,7 @@ export default function Login() {
           Don't have an account? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 500 }}>Register</Link>
         </p>
 
-        {/* Demo Credentials */}
-        <div style={{ marginTop: '1.75rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-          <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--subtle-fg)', textAlign: 'center', marginBottom: '0.75rem' }}>
-            Demo Accounts (click to fill)
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {demoCreds.map(c => (
-              <button key={c.email} type="button"
-                onClick={() => { setEmail(c.email); setPassword(c.password); }}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '0.625rem 0.875rem', borderRadius: '0.625rem', border: '1px solid var(--border)',
-                  background: '#F8FAFC', cursor: 'pointer', transition: 'all 0.15s',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.background = 'var(--primary-light)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = '#F8FAFC'; }}>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--muted-fg)' }}>{c.email}</span>
-                <span className={`badge ${c.cls}`}>{c.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+
 
         <p style={{ textAlign: 'center', marginTop: '1.25rem' }}>
           <Link to="/" style={{ fontSize: '0.8125rem', color: 'var(--muted-fg)' }}>← Back to Homepage</Link>

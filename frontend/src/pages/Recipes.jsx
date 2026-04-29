@@ -17,7 +17,6 @@ export default function Recipes() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [activeCategory, setActiveCategory] = useState(searchParams.get('cat') || 'All');
-
   const [savedIds, setSavedIds] = useState([]);
 
   useEffect(() => {
@@ -28,6 +27,19 @@ export default function Recipes() {
   }, []);
 
   useEffect(() => {
+    const qParam = searchParams.get('q') || '';
+    const catParam = searchParams.get('cat') || 'All';
+    setSearch(qParam);
+    setActiveCategory(catParam);
+  }, [searchParams]);
+
+  const onBookmarkChange = () => {
+    if (localStorage.getItem('token')) {
+      bookmarkService.getMine().then(data => setSavedIds(data.map(r => r.id))).catch(() => {});
+    }
+  };
+
+  useEffect(() => {
     setLoading(true);
     const q = activeCategory === 'All' ? '' : activeCategory;
     recipeService.getAll(search, q).then(data => {
@@ -36,20 +48,12 @@ export default function Recipes() {
     }).catch(() => setLoading(false));
   }, [search, activeCategory]);
 
-  const onBookmarkChange = () => {
-    if (localStorage.getItem('token')) {
-      bookmarkService.getMine().then(data => setSavedIds(data.map(r => r.id))).catch(() => {});
-    }
-  };
-
   const handleSearch = (e) => {
     const val = e.target.value;
-    setSearch(val);
     updateParams(val, activeCategory);
   };
 
   const handleCategoryClick = (cat) => {
-    setActiveCategory(cat);
     updateParams(search, cat);
   };
 

@@ -33,6 +33,11 @@ namespace RecipeNest.Api.Services
             }
 
             var recipes = await _db.Recipes.Find(filter).SortByDescending(r => r.CreatedAt).ToListAsync();
+            var userIds = await _db.Users.Find(_ => true).Project(u => u.Id).ToListAsync();
+            var userIdSet = userIds.ToHashSet();
+
+            // Filter out orphans (recipes whose chef account was deleted)
+            recipes = recipes.Where(r => userIdSet.Contains(r.ChefId)).ToList();
 
             // Apply text search using LINQ-style filtering (search title, description, tags)
             if (!string.IsNullOrWhiteSpace(query))

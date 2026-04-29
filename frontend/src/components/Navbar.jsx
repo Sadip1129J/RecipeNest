@@ -138,6 +138,13 @@ export default function Navbar() {
                 >
                   <LayoutDashboard size={16} /> Dashboard
                 </Link>
+                <Link 
+                  to="/profile-settings" 
+                  className="flex items-center justify-center gap-2 w-full btn btn-outline" 
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Profile Settings
+                </Link>
                 <button 
                   className="w-full btn bg-red-50 text-red-600 hover:bg-red-100" 
                   onClick={handleLogout}

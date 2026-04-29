@@ -28,7 +28,7 @@ import Loading from '../components/Loading';
 export default function AdminDashboard() {
   const location = useLocation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('recipes'); // recipes, users, categories, stats, moderation
+  const [activeTab, setActiveTab] = useState('stats'); // recipes, users, categories, stats, moderation
   const [recipes, setRecipes] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -45,6 +45,10 @@ export default function AdminDashboard() {
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [deleteData, setDeleteData] = useState(null); // { id, type: 'recipe'|'user'|'category' }
   const [alert, setAlert] = useState(null); // { type: 'success'|'error', message: '' }
+  
+  // Category addition state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -58,7 +62,7 @@ export default function AdminDashboard() {
       const element = document.getElementById('admin-resource-view');
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     } else if (!hash) {
-      setActiveTab('recipes');
+      setActiveTab('stats');
     }
   }, [location.hash]);
 
@@ -122,6 +126,23 @@ export default function AdminDashboard() {
       setEditingRecipe(null);
       fetchData();
     } catch (err) { console.error(err); }
+  };
+
+  const handleCategoryCreate = async (e) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    
+    try {
+      await categoryService.create(newCategoryName);
+      setNewCategoryName('');
+      setIsCategoryModalOpen(false);
+      setAlert({ type: 'success', message: 'Category added successfully!' });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: 'error', message: 'Failed to add category. It might already exist.' });
+      setTimeout(() => setAlert(null), 5000);
+    }
   };
 
 
@@ -222,9 +243,16 @@ export default function AdminDashboard() {
                 <button className="flex-1 sm:flex-none btn btn-outline btn-sm gap-2">
                   <Filter size={14} /> Filter
                 </button>
-                {activeTab === 'recipes' && (
+                {(activeTab === 'recipes' || activeTab === 'categories') && (
                   <button 
-                    onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }}
+                    onClick={() => { 
+                      if (activeTab === 'recipes') {
+                        setEditingRecipe(null); 
+                        setIsFormOpen(true); 
+                      } else {
+                        setIsCategoryModalOpen(true);
+                      }
+                    }}
                     className="flex-1 sm:flex-none btn btn-primary btn-sm gap-2"
                   >
                     <Plus size={14} /> Add New
@@ -398,6 +426,53 @@ export default function AdminDashboard() {
         }
         confirmText="Delete Forever"
       />
+
+      {/* Category Creation Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-primary/10 text-primary rounded-2xl">
+                <Tags size={24} />
+              </div>
+              <h3 className="text-2xl font-serif font-bold text-foreground">Add New Category</h3>
+            </div>
+            
+            <form onSubmit={handleCategoryCreate}>
+              <div className="space-y-4 mb-8">
+                <div>
+                  <label className="block text-[10px] font-bold text-subtle uppercase tracking-widest mb-2 px-1">Category Name</label>
+                  <input 
+                    type="text" 
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="e.g. Italian, Desserts, Vegan..."
+                    className="w-full px-5 py-4 bg-secondary rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-foreground placeholder:text-subtle/50"
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="flex-1 px-6 py-4 bg-secondary text-foreground font-bold rounded-2xl hover:bg-border transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 px-6 py-4 bg-primary text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all text-sm"
+                >
+                  Create Category
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

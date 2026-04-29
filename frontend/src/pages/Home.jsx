@@ -82,12 +82,12 @@ export default function Home() {
   };
 
   const categories = [
-    { icon: '🍛', label: 'Curry', color: 'bg-amber-100 text-amber-600' },
-    { icon: '🥟', label: 'Dumplings', color: 'bg-orange-100 text-orange-600' },
-    { icon: '🍜', label: 'Noodles', color: 'bg-red-100 text-red-600' },
-    { icon: '🥗', label: 'Salads', color: 'bg-emerald-100 text-emerald-600' },
-    { icon: '🍰', label: 'Desserts', color: 'bg-pink-100 text-pink-600' },
-    { icon: '🍲', label: 'Soups', color: 'bg-purple-100 text-purple-600' },
+    { icon: '🥐', label: 'Breakfast', color: 'bg-amber-100 text-amber-600' },
+    { icon: '🍱', label: 'Lunch', color: 'bg-orange-100 text-orange-600' },
+    { icon: '🍽️', label: 'Dinner', color: 'bg-red-100 text-red-600' },
+    { icon: '🍰', label: 'Dessert', color: 'bg-pink-100 text-pink-600' },
+    { icon: '🥗', label: 'Vegan', color: 'bg-emerald-100 text-emerald-600' },
+    { icon: '🍿', label: 'Snack', color: 'bg-purple-100 text-purple-600' },
   ];
 
   return (
@@ -180,7 +180,7 @@ export default function Home() {
             {categories.map(cat => (
               <Link
                 key={cat.label}
-                to={`/recipes?q=${encodeURIComponent(cat.label)}`}
+                to={`/recipes?cat=${encodeURIComponent(cat.label)}`}
                 className="group flex flex-col items-center justify-center p-8 bg-white border border-border rounded-[2rem] hover:border-primary hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
                 <div className={`w-16 h-16 mb-4 rounded-2xl ${cat.color.split(' ')[0]} flex items-center justify-center text-3xl group-hover:scale-110 transition-transform`}>

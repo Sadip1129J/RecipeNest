@@ -36,6 +36,7 @@ export default function Sidebar({ role, className = '' }) {
       { label: 'Manage Users', to: '/admin-dashboard#users', icon: Users },
       { label: 'Categories', to: '/admin-dashboard#categories', icon: Tags },
       { label: 'Analytics', to: '/admin-dashboard#stats', icon: BarChart3 },
+      { label: 'Profile Settings', to: '/profile-settings', icon: Settings },
     ],
     Chef: [
       { label: 'My Portfolio', to: '/chef-dashboard', icon: LayoutDashboard },

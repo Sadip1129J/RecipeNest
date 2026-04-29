@@ -23,6 +23,11 @@ namespace RecipeNest.Api.Services
         public async Task<List<ChefProfileDto>> GetAllAsync(string? query = null)
         {
             var chefs = await _db.ChefProfiles.Find(_ => true).ToListAsync();
+            var userIds = await _db.Users.Find(_ => true).Project(u => u.Id).ToListAsync();
+            var userIdSet = userIds.ToHashSet();
+
+            // Filter out orphans (chefs whose user account was deleted)
+            chefs = chefs.Where(c => userIdSet.Contains(c.UserId)).ToList();
 
             // LINQ-style search across multiple fields
             if (!string.IsNullOrWhiteSpace(query))

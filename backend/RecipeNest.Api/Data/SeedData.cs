@@ -27,57 +27,25 @@ namespace RecipeNest.Api.Data
             }
 
             // ── Seed Users ──
-            var userCount = await db.Users.CountDocumentsAsync(_ => true);
-            if (userCount == 0)
+            // ── Seed Users ──
+            var adminExists = await db.Users.Find(u => u.Email == "admin@recipenest.com").AnyAsync();
+            if (!adminExists)
             {
-                var admin = new User
-                {
-                    FullName = "Marcus Laurent",
-                    Email = "admin@recipenest.com",
-                    PasswordHash = passwordHelper.Hash("Admin123!"),
-                    Role = "Admin"
-                };
-
-                var chef = new User
-                {
-                    FullName = "Sofia Chen",
-                    Email = "chef@recipenest.com",
-                    PasswordHash = passwordHelper.Hash("Chef123!"),
-                    Role = "Chef"
-                };
-
-                var user = new User
-                {
-                    FullName = "James Wilson",
-                    Email = "user@recipenest.com",
-                    PasswordHash = passwordHelper.Hash("User123!"),
-                    Role = "User"
-                };
-
+                var admin = new User { FullName = "System Admin", Email = "admin@recipenest.com", PasswordHash = passwordHelper.Hash("Admin123!"), Role = "Admin" };
                 await db.Users.InsertOneAsync(admin);
-                await db.Users.InsertOneAsync(chef);
-                await db.Users.InsertOneAsync(user);
-
-                var chefProfile = new ChefProfile
-                {
-                    UserId = chef.Id,
-                    DisplayName = "Sofia Chen",
-                    Bio = "Award-winning chef specializing in Asian fusion cuisine.",
-                    Location = "San Francisco, CA",
-                    Specialties = new List<string> { "Asian Fusion", "Pastry" },
-                    ProfileImageUrl = "https://images.unsplash.com/photo-1607631568010-a87245c0daf8?w=400"
-                };
-                await db.ChefProfiles.InsertOneAsync(chefProfile);
-                await db.Users.UpdateOneAsync(u => u.Id == chef.Id, Builders<User>.Update.Set(u => u.ChefProfileId, chefProfile.Id));
-
-                var nepaliChefUsers = new List<User>
+                Console.WriteLine("[Seed] Admin user inserted.");
+            }
+            
+            var userCount = await db.Users.CountDocumentsAsync(_ => true);
+            if (userCount == 0 || (userCount == 1 && adminExists)) // Only seed chefs if empty or only admin exists
+            {
+                var chefs = new List<User>
                 {
                     new User { FullName = "Aayush Thapa", Email = "aayush@recipenest.com", PasswordHash = passwordHelper.Hash("Chef123!"), Role = "Chef" },
                     new User { FullName = "Suman Karki",  Email = "suman@recipenest.com",  PasswordHash = passwordHelper.Hash("Chef123!"), Role = "Chef" },
                 };
-                foreach (var nc in nepaliChefUsers) await db.Users.InsertOneAsync(nc);
-
-                Console.WriteLine("[Seed] Users and ChefProfiles inserted.");
+                foreach (var u in chefs) await db.Users.InsertOneAsync(u);
+                Console.WriteLine("[Seed] Chef users inserted.");
             }
             else
             {
