@@ -51,7 +51,7 @@ namespace RecipeNest.Api.Controllers
         public async Task<IActionResult> GetMine()
         {
             var chefId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var recipes = await _recipeService.GetByChefAsync(chefId);
+            var recipes = await _recipeService.GetByChefAsync(chefId, includeUnapproved: true);
             return Ok(recipes);
         }
 
@@ -59,7 +59,13 @@ namespace RecipeNest.Api.Controllers
         [HttpGet("chef/{chefId}")]
         public async Task<IActionResult> GetByChef(string chefId)
         {
-            var recipes = await _recipeService.GetByChefAsync(chefId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            
+            // Only show unapproved recipes if the requester is the chef themselves or an admin
+            bool canSeeUnapproved = (chefId == userId || role == "Admin");
+            
+            var recipes = await _recipeService.GetByChefAsync(chefId, canSeeUnapproved);
             return Ok(recipes);
         }
 

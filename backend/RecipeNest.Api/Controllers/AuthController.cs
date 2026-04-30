@@ -27,8 +27,8 @@ namespace RecipeNest.Api.Controllers
             if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password) || string.IsNullOrWhiteSpace(dto.FullName))
                 return BadRequest(new { message = "Name, email, and password are required." });
 
-            if (dto.Password.Length < 6)
-                return BadRequest(new { message = "Password must be at least 6 characters." });
+            if (dto.Password.Length < 8)
+                return BadRequest(new { message = "Password must be at least 8 characters." });
 
             var result = await _authService.RegisterAsync(dto);
             if (result == null)

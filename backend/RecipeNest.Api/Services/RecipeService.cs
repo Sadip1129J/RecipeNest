@@ -23,7 +23,7 @@ namespace RecipeNest.Api.Services
         // Get all recipes with optional search query and category filter
         public async Task<List<RecipeDto>> GetAllAsync(string? query = null, string? category = null)
         {
-            var filter = Builders<Recipe>.Filter.Empty;
+            var filter = Builders<Recipe>.Filter.Eq(r => r.Status, "Approved");
             
             // Filter by category name (case-insensitive)
             if (!string.IsNullOrWhiteSpace(category) && category != "All")
@@ -67,10 +67,15 @@ namespace RecipeNest.Api.Services
         }
 
         // Get recipes by a specific chef
-        // If requester is NOT the chef or admin, only show approved
-        public async Task<List<RecipeDto>> GetByChefAsync(string chefId)
+        public async Task<List<RecipeDto>> GetByChefAsync(string chefId, bool includeUnapproved = false)
         {
             var filter = Builders<Recipe>.Filter.Eq(r => r.ChefId, chefId);
+            
+            if (!includeUnapproved)
+            {
+                filter &= Builders<Recipe>.Filter.Eq(r => r.Status, "Approved");
+            }
+
             var recipes = await _db.Recipes.Find(filter)
                 .SortByDescending(r => r.CreatedAt).ToListAsync();
             return recipes.Select(ToDto).ToList();

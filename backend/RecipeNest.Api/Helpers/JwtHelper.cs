@@ -21,7 +21,7 @@ namespace RecipeNest.Api.Helpers
         // Generate a signed JWT token containing userId, email, and role claims
         public string GenerateToken(User user)
         {
-            var secret = _config["Jwt:Secret"];
+            var secret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? _config["Jwt:Secret"];
             var issuer = _config["Jwt:Issuer"];
             var audience = _config["Jwt:Audience"];
             var expiryHours = int.Parse(_config["Jwt:ExpiryInHours"] ?? "24");

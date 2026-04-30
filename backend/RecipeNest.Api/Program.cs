@@ -26,7 +26,7 @@ builder.Services.AddScoped<BookmarkService>();
 builder.Services.AddScoped<StatisticsService>();
 
 // ── JWT Authentication ──
-var jwtSecret = builder.Configuration["Jwt:Secret"];
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? builder.Configuration["Jwt:Secret"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
@@ -47,12 +47,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// ── CORS: allow frontend (Vite dev server) ──
+// ── CORS: allow frontend (Vite dev server + Production Domain) ──
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174")
+        var allowedOrigins = new List<string> { 
+            "http://localhost:5173", 
+            "http://localhost:5174", 
+            "http://localhost:3000", 
+            "http://127.0.0.1:5173", 
+            "http://127.0.0.1:5174" 
+        };
+        
+        var prodOrigin = Environment.GetEnvironmentVariable("PRODUCTION_ORIGIN");
+        if (!string.IsNullOrEmpty(prodOrigin)) allowedOrigins.Add(prodOrigin);
+
+        policy.WithOrigins(allowedOrigins.ToArray())
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -65,6 +76,7 @@ var app = builder.Build();
 
 // ── Middleware Pipeline ──
 app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseHttpsRedirection();
 
 // Serve uploaded images from wwwroot/uploads
 app.UseStaticFiles();

@@ -31,11 +31,70 @@ namespace RecipeNest.Api.Data
             var adminExists = await db.Users.Find(u => u.Email == "admin@recipenest.com").AnyAsync();
             if (!adminExists)
             {
-                var admin = new User { FullName = "System Admin", Email = "admin@recipenest.com", PasswordHash = passwordHelper.Hash("Admin123!"), Role = "Admin" };
+                var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "Admin123!";
+                if (adminPassword == "Admin123!")
+                {
+                    Console.WriteLine("[Warning] No ADMIN_PASSWORD env var found. Using insecure default 'Admin123!'. PLEASE CHANGE IMMEDIATELY.");
+                }
+
+                var admin = new User 
+                { 
+                    FullName = "System Admin", 
+                    Email = "admin@recipenest.com", 
+                    PasswordHash = passwordHelper.Hash(adminPassword), 
+                    Role = "Admin" 
+                };
                 await db.Users.InsertOneAsync(admin);
                 Console.WriteLine("[Seed] Admin user inserted.");
             }
             
+            var sadipUser = await db.Users.Find(u => u.Email == "sadip@gmail.com").FirstOrDefaultAsync();
+            if (sadipUser == null)
+            {
+                var sadip = new User 
+                { 
+                    FullName = "Sadip Chef", 
+                    Email = "sadip@gmail.com", 
+                    PasswordHash = passwordHelper.Hash("123456"), 
+                    Role = "Chef" 
+                };
+                await db.Users.InsertOneAsync(sadip);
+                sadipUser = sadip;
+                Console.WriteLine("[Seed] Sadip user inserted.");
+            }
+            else
+            {
+                // Unconditionally update password and role for testing purposes
+                await db.Users.UpdateOneAsync(
+                    u => u.Email == "sadip@gmail.com",
+                    Builders<User>.Update
+                        .Set(u => u.PasswordHash, passwordHelper.Hash("123456"))
+                        .Set(u => u.Role, "Chef")
+                );
+                Console.WriteLine("[Seed] Sadip user password/role reset to 123456/Chef.");
+            }
+            
+            // Ensure Sadip has a ChefProfile
+            var chefProfile = await db.ChefProfiles.Find(p => p.UserId == sadipUser.Id).FirstOrDefaultAsync();
+            if (chefProfile == null)
+            {
+                chefProfile = new ChefProfile
+                {
+                    UserId = sadipUser.Id,
+                    DisplayName = sadipUser.FullName,
+                    Bio = "Professional Chef specializing in Nepali Cuisine.",
+                    Specialties = new List<string> { "Momo", "Thakali", "Newari" }
+                };
+                await db.ChefProfiles.InsertOneAsync(chefProfile);
+                
+                await db.Users.UpdateOneAsync(
+                    u => u.Id == sadipUser.Id,
+                    Builders<User>.Update.Set(u => u.ChefProfileId, chefProfile.Id)
+                );
+                
+                Console.WriteLine("[Seed] Sadip chef profile created.");
+            }
+
             var userCount = await db.Users.CountDocumentsAsync(_ => true);
             if (userCount == 0 || (userCount == 1 && adminExists)) // Only seed chefs if empty or only admin exists
             {

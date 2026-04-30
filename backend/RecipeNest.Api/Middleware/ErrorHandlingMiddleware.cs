@@ -31,7 +31,13 @@ namespace RecipeNest.Api.Middleware
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json";
 
-                var error = new { message = "An internal server error occurred.", detail = ex.Message };
+                var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                var error = new 
+                { 
+                    message = "An unexpected error occurred. Please try again later.", 
+                    detail = isDev ? ex.Message : null 
+                };
+                
                 await context.Response.WriteAsync(JsonSerializer.Serialize(error));
             }
         }

@@ -27,6 +27,36 @@ namespace RecipeNest.Api.Controllers
             if (!allowedTypes.Contains(file.ContentType.ToLower()))
                 return BadRequest(new { message = "Only JPEG, PNG, GIF, and WebP images are allowed." });
 
+            // Validate magic bytes (actual file header)
+            using (var reader = new BinaryReader(file.OpenReadStream()))
+            {
+                var signatures = new Dictionary<string, byte[]>
+                {
+                    { ".jpeg", new byte[] { 0xFF, 0xD8, 0xFF } },
+                    { ".png",  new byte[] { 0x89, 0x50, 0x4E, 0x47 } },
+                    { ".gif",  new byte[] { 0x47, 0x49, 0x46, 0x38 } }
+                };
+
+                var headerBytes = reader.ReadBytes(4);
+                bool isValid = false;
+                foreach (var sig in signatures.Values)
+                {
+                    if (headerBytes.Take(sig.Length).SequenceEqual(sig))
+                    {
+                        isValid = true;
+                        break;
+                    }
+                }
+                
+                // WebP check (RIFF....WEBP)
+                if (!isValid && headerBytes.SequenceEqual(new byte[] { 0x52, 0x49, 0x46, 0x46 }))
+                {
+                    isValid = true; // Simplified WebP check
+                }
+
+                if (!isValid) return BadRequest(new { message = "Invalid image file content." });
+            }
+
             // Validate file size (max 5MB)
             if (file.Length > 5 * 1024 * 1024)
                 return BadRequest(new { message = "File size must be under 5MB." });

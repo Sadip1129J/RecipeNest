@@ -1,96 +1,162 @@
-# RecipeNest 🍳 — Full-Stack Chef Portal
+# Recipe Nest - Full Stack Recipe Management System
 
-RecipeNest is a premium, full-stack web application designed for chefs to showcase their culinary portfolios and for food lovers to discover exquisite recipes. Built with a modern ASP.NET Core backend and a React (Tailwind v4) frontend, the platform offers a seamless experience for browsing, saving, and reviewing world-class dishes.
+Recipe Nest is a comprehensive full-stack application designed for managing recipes, categories, and user profiles. This project features a robust C# .NET backend and a modern React frontend.
 
----
+# Recipe Nest - Full Stack Recipe Management System
 
-## 🌟 Key Features
-
-### 👨‍🍳 For Chefs
-- **Professional Portfolio**: Showcase your bio, specialties, and location.
-- **Recipe Management**: Create, edit, and delete recipes with a rich interface (ingredients, instructions, images).
-- **Culinary Stats**: Track your performance with average ratings and recipe counts.
-- **Secure Access**: Role-based authentication ensures only you can manage your creations.
-
-### 🍴 For Food Lovers
-- **Discover**: Browse recipes by category, search by title/ingredient, or explore trending dishes.
-- **Personal Dashboard**: Save your favorite recipes to your personal collection.
-- **Engage**: Rate and review recipes with a star system and detailed comments.
-- **Connect**: Visit public chef profiles to learn about the creators behind the food.
-
-### 🛡️ For Administrators
-- **Global Overview**: Platform-wide statistics on users, recipes, and engagement.
-- **Content Moderation**: Manage any recipe, category, or user account.
-- **System Control**: Add/remove categories to keep the platform organized.
+Recipe Nest is a comprehensive full-stack application designed for managing recipes, categories, and user profiles. This project features a robust C# .NET backend and a modern React frontend.
 
 ---
 
-## 🛠️ Technology Stack
+## Setup Instructions
 
-### **Backend (ASP.NET Core 8.0)**
-- **Architecture**: REST API with Repository/Service Pattern.
-- **Database**: MongoDB (NoSQL) for flexible schema management.
-- **Security**: JWT (JSON Web Tokens) for authentication and BCrypt for password hashing.
-- **Mapping**: AutoMapper for DTO (Data Transfer Object) conversions.
+This section provides step-by-step instructions for setting up and running Recipe Nest locally.
 
-### **Frontend (React)**
-- **Styling**: Tailwind CSS v4 (The latest utility-first CSS framework).
-- **Icons**: Lucide React for modern, consistent iconography.
-- **State Management**: React Context API for global Authentication and User state.
-- **Routing**: React Router DOM for smooth SPA transitions.
+## Prerequisites
+
+Before starting, ensure the following tools are installed on your system:
+
+| Tool | Required Version | Download Link |
+| :--- | :--- | :--- |
+| **.NET SDK** | 8.0 or later | [Download .NET 8.0](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Node.js** | 18.0+ (LTS recommended) | [Download Node.js](https://nodejs.org/) |
+| **npm** | 9.0+ (bundled with Node.js) | Included with Node.js |
+| **MongoDB** | 7.0+ (Community Edition) | [Download MongoDB](https://www.mongodb.com/try/download/community) |
+| **Git** | Latest | [Download Git](https://git-scm.com/) |
 
 ---
 
-## 🚀 Getting Started
+## Step 1: Clone the Repository
 
-### Prerequisites
-- .NET 8.0 SDK
-- Node.js (v18+)
-- MongoDB (running locally on port 27017 or via Atlas)
+```bash
+git clone https://github.com/<your-username>/recipe-nest-fullstack.git
+cd recipe-nest-fullstack
+```
 
-### 1. Backend Setup
+## Step 2: Set Up MongoDB
+
+Ensure MongoDB is running locally on the default port (`27017`).
+
+### On Windows
+If installed as a service, it starts automatically.
+
+### On macOS (Homebrew)
+```bash
+brew services start mongodb-community
+```
+
+### On Ubuntu/Linux
+```bash
+sudo systemctl start mongod
+sudo systemctl enable mongod
+```
+
+### Verify MongoDB is running
+```bash
+mongosh --eval "db.runCommand({ connectionStatus: 1 })"
+```
+
+> **Note:** If using **MongoDB Atlas (cloud)**, update the connection string in `backend/RecipeNest.Api/appsettings.json`.
+
+---
+
+## Step 3: Configure the Backend
+
 ```bash
 cd backend/RecipeNest.Api
+```
+
+Review and update `appsettings.json` with your configuration:
+
+```json
+{
+  "MongoDb": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "DatabaseName": "RecipeNestDb"
+  },
+  "Jwt": {
+    "Secret": "YourSuperSecretKeyThatIsAtLeast32CharactersLong!",
+    "Issuer": "RecipeNestApi",
+    "Audience": "RecipeNestClient",
+    "ExpiryInHours": 24
+  }
+}
+```
+
+---
+
+## Step 4: Run the Backend API
+
+```bash
+# Restore NuGet packages
 dotnet restore
+
+# Build the project
+dotnet build
+
+# Run the API server (default: http://localhost:5174)
 dotnet run
 ```
-The API will be available at `http://localhost:5174`.
 
-### 2. Frontend Setup
+On first startup, the application will automatically seed the database with:
+*   **7 default categories** (Breakfast, Lunch, Dinner, Dessert, Appetizer, Snack, Vegan)
+*   **3 test users**: Admin, Chef, and regular User
+*   **Sample profiles and recipes**
+
+**Swagger Documentation:** [http://localhost:5174/swagger](http://localhost:5174/swagger)
+
+---
+
+## Step 5: Set Up the Frontend
+
 ```bash
 cd frontend
+
+# Install npm dependencies
 npm install
+
+# Configure environment variables
+echo "VITE_API_BASE_URL=http://localhost:5174/api" > .env
+```
+
+## Step 6: Run the Frontend
+
+```bash
+# Start the Vite development server
 npm run dev
 ```
-The application will be available at `http://localhost:5173`.
+
+**Local URL:** [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 📂 Project Structure
+## Step 7: Verify the Application
 
-- `/backend`: ASP.NET Core Web API project.
-  - `/Models`: MongoDB entities.
-  - `/Services`: Business logic and database interactions.
-  - `/Controllers`: RESTful endpoints.
-  - `/Data`: MongoDB context and Seed data.
-- `/frontend`: React application.
-  - `/src/pages`: Main application views (Home, Dashboards, Profiles).
-  - `/src/components`: Reusable UI components (Sidebar, Modal, RecipeCard).
-  - `/src/services`: Axios API wrappers.
-  - `/src/context`: Auth context provider.
+1.  Open the application in your browser.
+2.  Register a new account or log in with a seeded test account.
+3.  Verify the home page loads with featured recipes and category filters.
+4.  Test search, browsing, and (if logged in as Chef) recipe management.
 
 ---
 
-## ✅ Marking Criteria Checklist
+## Test Account Credentials
 
-- [x] **Full-stack functionality**: Fully working React + ASP.NET Core + MongoDB.
-- [x] **Chef Features**: Profile management, Portfolio, and CRUD for recipes.
-- [x] **Admin Features**: Global management and statistics.
-- [x] **Security**: JWT, BCrypt, and Protected Routes implemented.
-- [x] **UI/UX**: Premium design using Tailwind v4 and Lucide icons.
-- [x] **Database**: Real persistence with MongoDB (Categories, Users, Recipes, Reviews).
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin@recipenest.com` | `Admin@123` |
+| **Chef** | `chef@recipenest.com` | `Chef@123` |
+| **User** | `user@recipenest.com` | `User@123` |
 
 ---
 
-## 📄 License
-Created for University Coursework — 2026.
+## Troubleshooting
+
+| Issue | Solution |
+| :--- | :--- |
+| **MongoDB connection refused** | Ensure MongoDB is running: `sudo systemctl status mongod` |
+| **CORS errors** | Verify the frontend URL is whitelisted in `Program.cs` |
+| **dotnet command not found** | Install .NET 8.0 SDK |
+| **npm command not found** | Install Node.js v18+ |
+| **Port 5173 in use** | Kill the existing process or change port in `vite.config.js` |
+| **JWT token errors** | Ensure `Jwt:Secret` is at least 32 characters |
+
